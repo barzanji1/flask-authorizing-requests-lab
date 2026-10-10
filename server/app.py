@@ -85,15 +85,33 @@ class CheckSession(Resource):
         return {}, 401
 
 class MemberOnlyIndex(Resource):
-    
+
     def get(self):
-        pass
+
+        if not session.get('user_id'):
+            return {'error': 'Unauthorized'}, 401
+
+        articles = Article.query.filter_by(is_member_only=True).all()
+
+        return [ArticleSchema().dump(article) for article in articles], 200
+
 
 class MemberOnlyArticle(Resource):
-    
-    def get(self, id):
-        pass
 
+    def get(self, id):
+
+        if not session.get('user_id'):
+            return {'error': 'Unauthorized'}, 401
+
+        article = Article.query.filter_by(
+            id=id,
+            is_member_only=True
+        ).first()
+
+        if not article:
+            return {'error': 'Article not found'}, 404
+
+        return ArticleSchema().dump(article), 200
 api.add_resource(ClearSession, '/clear', endpoint='clear')
 api.add_resource(IndexArticle, '/articles', endpoint='article_list')
 api.add_resource(ShowArticle, '/articles/<int:id>', endpoint='show_article')
